@@ -1,0 +1,132 @@
+CREATE TABLE Sales_UNF (
+    SaleID INT PRIMARY KEY,
+    CustomerID VARCHAR(10),
+    CustomerName VARCHAR(50),
+    Products VARCHAR(100),
+    Salesperson VARCHAR(50)
+);
+
+INSERT INTO Sales_UNF VALUES
+(101, 'C01', 'Rahul', 'P01,P02', 'Amit'),
+(102, 'C02', 'Priya', 'P02,P03', 'Neha'),
+(103, 'C01', 'Rahul', 'P01,P03', 'Amit');
+
+SELECT * FROM Sales_UNF;
+
+
+CREATE TABLE Sales_1NF (
+    SaleID INT,
+    CustomerID VARCHAR(10),
+    CustomerName VARCHAR(50),
+    ProductID VARCHAR(10),
+    ProductName VARCHAR(50),
+    Price INT,
+    Salesperson VARCHAR(50),
+    PRIMARY KEY (SaleID, ProductID)
+);
+
+INSERT INTO Sales_1NF VALUES
+(101,'C01','Rahul','P01','Laptop',50000,'Amit'),
+(101,'C01','Rahul','P02','Mouse',500,'Amit'),
+(102,'C02','Priya','P02','Mouse',500,'Neha'),
+(102,'C02','Priya','P03','Keyboard',1500,'Neha'),
+(103,'C01','Rahul','P01','Laptop',50000,'Amit'),
+(103,'C01','Rahul','P03','Keyboard',1500,'Amit');
+
+SELECT * FROM Sales_1NF;
+
+
+CREATE TABLE Sales_2NF AS
+SELECT DISTINCT SaleID, CustomerID,
+       CustomerName, Salesperson
+FROM Sales_1NF;
+
+ALTER TABLE Sales_2NF
+ADD PRIMARY KEY (SaleID);
+
+CREATE TABLE Products_2NF AS
+SELECT DISTINCT ProductID, ProductName, Price
+FROM Sales_1NF;
+
+ALTER TABLE Products_2NF
+ADD PRIMARY KEY (ProductID);
+
+CREATE TABLE SaleItems_2NF AS
+SELECT SaleID, ProductID
+FROM Sales_1NF;
+
+ALTER TABLE SaleItems_2NF
+ADD PRIMARY KEY (SaleID, ProductID);
+
+SELECT * FROM Sales_2NF;
+SELECT * FROM Products_2NF;
+SELECT * FROM SaleItems_2NF;
+
+
+CREATE TABLE Customers (
+    CustomerID VARCHAR(10) PRIMARY KEY,
+    CustomerName VARCHAR(50)
+);
+
+CREATE TABLE Sales (
+    SaleID INT PRIMARY KEY,
+    CustomerID VARCHAR(10),
+    Salesperson VARCHAR(50),
+    FOREIGN KEY (CustomerID)
+        REFERENCES Customers(CustomerID)
+);
+
+CREATE TABLE Products (
+    ProductID VARCHAR(10) PRIMARY KEY,
+    ProductName VARCHAR(50),
+    Price INT
+);
+
+CREATE TABLE SaleItems (
+    SaleID INT,
+    ProductID VARCHAR(10),
+    PRIMARY KEY (SaleID, ProductID),
+    FOREIGN KEY (SaleID)
+        REFERENCES Sales(SaleID),
+    FOREIGN KEY (ProductID)
+        REFERENCES Products(ProductID)
+);
+
+INSERT INTO Customers
+SELECT DISTINCT CustomerID, CustomerName
+FROM Sales_1NF;
+
+INSERT INTO Sales
+SELECT DISTINCT SaleID, CustomerID, Salesperson
+FROM Sales_1NF;
+
+INSERT INTO Products
+SELECT DISTINCT ProductID, ProductName, Price
+FROM Sales_1NF;
+
+INSERT INTO SaleItems
+SELECT SaleID, ProductID
+FROM Sales_1NF;
+
+SELECT * FROM Customers;
+SELECT * FROM Sales;
+SELECT * FROM Products;
+SELECT * FROM SaleItems;
+
+
+SELECT
+    s.SaleID,
+    c.CustomerID,
+    c.CustomerName,
+    p.ProductID,
+    p.ProductName,
+    p.Price,
+    s.Salesperson
+FROM Sales s
+JOIN Customers c
+    ON s.CustomerID = c.CustomerID
+JOIN SaleItems si
+    ON s.SaleID = si.SaleID
+JOIN Products p
+    ON si.ProductID = p.ProductID
+ORDER BY s.SaleID, p.ProductID;
